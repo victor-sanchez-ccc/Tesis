@@ -1,0 +1,183 @@
+---
+title: "DIFICULTAD DE LOS ALUMNOS DE INGENIERÍA EN SISTEMAS PARA SER ACEPTADOS EN SU PRIMERA OPCIÓN DE PRÁCTICA PROFESIONAL"
+author: ""
+date: ""
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "/Users/Vicktor Sanz/Desktop/Tesis/encuesta-Seminario") 
+library(dplyr)
+library(ggplot2)
+library(caret)
+```
+
+## Introducción
+
+En este analisis tratamos de mostrar cuales son algunas de las caracteristicas en los estudiantes de ingenieria en sistemas de la UNAH, con el proposito de determinar cuales son las razones o causas por las cuales estos estudiantes pueden llegar a sufrir rechazo al momento de aplicar o postularse para un trabajo o practica profesional. la recolección de esta información se realizo mediante encuestas aplicadas a dichos estudiantes. Conocemos que para estos estudiantes es de suma importancia la realizacion de una practica profesional y posteriormente la obtencion de un trabajo, por lo que en este estudio tratamos de mostrar, cual seria una posible solucion mediante tencnologia para prevenir situaciones de rechazo y asi aumentar los casos de exito en lo que actualmente es una problematica a la que muchos de estos estudiantes enfrentan.
+
+
+
+## Variables capturadas
+
+```{r reading_dataset, echo=FALSE}
+survey <- read.csv("survey_cleaned.csv",sep = ",", header = T)
+
+str(survey)
+
+```
+
+**Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(names(survey))` columnas, estas fueron diseñadas en funciones de las siguientes categorias:**
+
+1. Información demografica
+2. Datos académicos
+3. Hábitos del estudiante
+4. Experiencias previas del estudiante
+5. Habilidades o Hard Skills del estudiante
+6. Conociemiento del estudiante acerca de Empresas
+7. Solución tecnológica
+
+
+**A continuación mostramos un resumen rapido de cada una de nuestra columnas:**
+
+> ##### *Se debe tener en cuenta que toda la informacion recopilada en nuestra encuesta, se basa en variables categoricas por lo que este resumen no contiene datos de relevancia estadistica, sin embargo estas variables fueron tratadas por separado, y mas adelante en la seccion Analisis descriptivo de datos en este informe podemos observar, el tratamiento de estas variables para la obtencion de datos estadisticos de utilidad.*
+
+```{r}
+survey <- survey[,!(names(survey) %in% c("correo"))]
+for(name in names(survey)){
+  survey[,name]<-as.factor((survey[,name]))
+}
+summary(survey)
+```
+
+## Tratamiento de columnas
+
+
+`### TU CODIGO AQUI, EXPLICANDO EL TRATAMIENTO DE DATOS QUE LE HICISTES A TUS COLUMNAS`
+
+
+
+## Analisis descriptivo de datos
+
+
+`TU CODIGO AQUI, CON EL ANALISIS DESCRIPTIVO (TRASFORMACIONES, CORRELACIONES, ETC) DE TUS 2 VARIABLES`
+
+
+
+
+## Explicativa 
+
+En esta seccion buscamos mostrar las razones o causas que den respuesta a nuestra pregunta de investigacion. y asi tratar de explicar mediante la comprobación de nuestra hipótesis por qué ocurre este fenómeno.
+
+
+* ### Regresiones 
+
+Recopilamos todas las variables que son importantes para verificar cual es la más influyente con respecto a la de respuesta para ello necesitamos la recopilación a través de RStudio demostrando lo siguiente:
+
+
+```{r echo=FALSE}
+prop.table(table(survey$rechazo_en_entrevista))
+```
+
+```{r echo=FALSE}
+features <- c(
+  "edad", 
+  "rango_indice", 
+  "nuevas_habilidades_autodidacta",
+  "rendimiento_academico", #survey$area_preferida
+  #"area_preferida",
+  "estudiante_foraneo",
+  "trabaja",
+  "rechazo_en_entrevista"
+)
+set <- survey[, names(survey) %in% features ]
+set$rechazo_en_entrevista  <- as.factor(set$rechazo_en_entrevista)
+model <- glm(rechazo_en_entrevista ~ ., data = set, family = "binomial")
+importances <- varImp(model)
+importances$colum <- row.names(importances)
+importances <- importances %>% arrange(-Overall)
+importances
+```
+
+Ya recopilados las variables más influyentes con la regresion aplicada, ordenadas de la más importante a la que menos porcentaje posee, de acuerdo a la variable de respuesta  “Rango_indice” es la más influyente teniendo la mayor importancias, para verlo de una manera más clara recopilaremos cada variable con sus respectivos gráficos.
+
+
+```{r echo=FALSE}
+ggplot(set) +
+  aes(x= rango_indice, fill=factor(rechazo_en_entrevista))+
+  geom_bar(position='fill')+
+  theme(axis.text.x = element_text(angle = 45))+
+  scale_fill_manual(values=c("#999999","#E69F00"))
+```
+
+Como se muestra en el grafico anterior el rechazo de las entrevistas se da menos para aquello estudiantes que tienen el índice mayor o igual a 81 los que se encuentran en excelencia académica algo notable se puede ver que las o los estudiantes que tienen mayor rechazo son los que tienen un índice menor a 71. Notamos que la barra del índice 76-80 se nota que hay más rechazo pero no es así, en esa barra la cantidad de personas que tienen ese índice es mayor a la cantidad de personas que están en los índices anteriores, comparando con las barras anteriores notamos que los porcentajes de rechazo son menores. 
+
+
+
+```{r echo=FALSE}
+ggplot(set) +
+  aes(x= estudiante_foraneo, fill=factor(rechazo_en_entrevista))+
+  geom_bar(position='fill')+
+  theme(axis.text.x = element_text(angle = 45))+
+  scale_fill_manual(values=c("#999999","#E69F00"))
+```
+
+Logramos apreciar en el grafico anterior que los estudiantes que son foráneos tienen mayor aceptación en las entrevistas consiguiendo la aprobación de las empresas para realizar la practica profesional, a comparación a los estudiantes que viven en la capital ellos demuestran que tienden a ser mas rechazados por las empresas, sin embargo, dada la cantidad de estudiantes varia el indice de rechazo y como se muestra la poblacion con mayor numero de consultados son estudiantes de la capital.
+
+
+
+```{r echo=FALSE}
+ggplot(set) +
+  aes(x= trabaja, fill=factor(rechazo_en_entrevista))+
+  geom_bar(position='fill')+
+  theme(axis.text.x = element_text(angle = 45))+
+  scale_fill_manual(values=c("#999999","#E69F00"))
+```
+
+
+Claramente como vemos en el grafico anterior notamos que las personas que trabajan tienen más aceptación y menos rechazo por parte de las empresas dado que los estudiantes tienen un poco de experiencia en el ámbito laboral, aunque en la barra de las personas que no trabajan también notamos que aunque hay más rechazo también hay aceptación, demostrando que las empresas aceptan a los estudiantes para darles una oportunidad en el campo laboral aunque no tengan experiencia en este.
+
+
+
+```{r echo=FALSE}
+ggplot(set) +
+  aes(x= edad, fill=factor(rechazo_en_entrevista))+
+  geom_bar(position='stack')+
+  theme(axis.text.x = element_text(angle = 45))+
+  scale_fill_manual(values=c("#999999","#E69F00"))
+```
+
+En el grafico anterior vemos que los estudiantes que tienen años de 20-25 tienen menos rechazo en las entrevistas por parte de las empresas, notamos las mismas circunstancias en la barra de las edades de 26-30, podemos decir que las empresas tienen una mayor aceptación a los estudiantes que están a una edad de 20 a 25 años además de que la mayoría de los encuestados son muy jóvenes dándoles más posibilidades de ser aceptados, y a los estúdiates con mayoría de edad tienen aceptación pero no podemos decir que la tiene o no, por la poca cantidad de datos en la ultima proyeccion. 
+
+
+
+```{r echo=FALSE}
+ggplot(set) +
+  aes(x= rendimiento_academico, fill=factor(rechazo_en_entrevista))+
+  geom_bar(position='stack')+
+  theme(axis.text.x = element_text(angle = 45))+
+  scale_fill_manual(values=c("#999999","#E69F00"))
+```
+
+En el grafico anterior vemos con claridad que el estudiantado que tiene alto rendimiento académico obviamente consigue menos rechazo por parte de las empresas, notamos que el rendimiento medio del estudiantado es mas sujeto al a ser rechazado, sin embargo, tambien tienen un gran numero de aceptacion. 
+
+
+
+* ### Solucion tecnologica
+
+Con toda la informacion mostrada anteriormente, vemos como el problema de nuestro estudio necesita una solucion, para este caso en particular se propone una solucion basada en tecnologia
+a continuacion mostramos en que consite nuestra solucion:
+
+
+
+
+
+
+
+
+
+
+
+
+

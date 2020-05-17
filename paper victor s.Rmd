@@ -1,0 +1,401 @@
+---
+title: 'DIFICULTAD DE LOS ALUMNOS DE INGENIERÍA EN SISTEMAS PARA SER ACEPTADOS EN SUPRIMERA OPCIÓN DE PRÁCTICA PROFESIONAL'
+author: ''
+date: ''
+output:
+html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "/Users/Vicktor Sanz/Desktop/Tesis/encuesta-Seminario") 
+library(dplyr)
+library(ggplot2)
+library(caret)
+```
+
+
+
+
+
+## Introducción
+
+En este analisis tratamos de mostrar cuales son algunas de las caracteristicas en los estudiantes de ingenieria en sistemas de la UNAH, con el proposito de determinar cuales son las razones o causas por las cuales estos estudiantes pueden llegar a sufrir rechazo al momento de aplicar o postularse para un trabajo o practica profesional. la recolección de esta información se realizo mediante encuestas aplicadas a dichos estudiantes. Conocemos que para estos estudiantes es de suma importancia la realizacion de una practica profesional y posteriormente la obtencion de un trabajo, por lo que en este estudio tratamos de mostrar, cual seria una posible solucion mediante tencnologia para prevenir situaciones de rechazo y asi aumentar los casos de exito en lo que actualmente es una problematica a la que muchos de estos estudiantes enfrentan.
+
+
+
+## Variables capturadas
+
+```{r reading_dataset, echo=FALSE}
+survey <- read.csv("survey_cleaned.csv",sep = ",", header = T)
+
+str(survey)
+
+```
+
+**Como se puede observar se capturaron `r nrow(survey)` observaciones y `r length(names(survey))` columnas, estas fueron diseñadas en funciones de las siguientes categorias:**
+
+1. Información demografica
+2. Datos académicos
+3. Hábitos del estudiante
+4. Experiencias previas del estudiante
+5. Habilidades o Hard Skills del estudiante
+6. Conociemiento del estudiante acerca de Empresas
+7. Opción tecnológica
+
+
+**A continuación mostramos un resumen rapido de cada una de nuestra columnas:**
+
+> ##### *Se debe tener en cuenta que toda la informacion recopilada en nuestra encuesta, se basa en variables categoricas por lo que este resumen no contiene datos de relevancia estadistica, sin embargo estas variables fueron tratadas por separado, y mas adelante en la seccion Analisis descriptivo de datos en este informe podemos observar, el tratamiento de estas variables para la obtencion de datos estadisticos de utilidad.*
+
+```{r}
+survey <- survey[,!(names(survey) %in% c("correo"))]
+for(name in names(survey)){
+  survey[,name]<-as.factor((survey[,name]))
+}
+summary(survey)
+```
+
+## Tratamiento de columnas
+
+En el tratamiento de columnas uno de los tratamientos tipicos es la deteccion de valores nulos y aplicar algún tipo de transformación segun sea el caso. en nuestro dataset tenemos los siguientes valores nulos.
+
+```{r echo=FALSE}
+
+na.summay <- c()
+
+for( myname in names(survey)){
+  
+  s <- as.data.frame(prop.table(table(is.na(survey[,myname]))))
+  operacion <- s %>% filter(Var1 == TRUE) %>% select(Freq)
+  
+  df_temp <- data.frame( 
+    column.name=c(myname),  
+    na.percentage = ifelse( length(operacion$Freq) == 0, 0, operacion$Freq[1] )
+  )
+  
+  na.summay <- rbind(na.summay,df_temp)
+  
+}
+
+na.summay %>% arrange(-na.percentage) %>% filter(na.percentage > 0)
+```
+
+> ##### *Como podemos observar en nuestro caso el data set no contiene valores nulos, para este caso se tuvo que crear otro tipo de imputaciones para limpiar datos basura, en el caso de las varibles mostradas en este documento la informacion obtenida de la encuesta fue de calidad y no fue necesesario realizar imputaciones ni tratamientos para la limpieza de estos valores.*
+
+
+## Analisis descriptivo de datos
+
+Las variables tratadas en esta seccion están representadas con su respectiva pregunta y el tipo de  respuestas en la siguiente tabla, a estas se les ha realizado su respectivo resumen estadístico el cual se muestra luego de esta tabla.
+
+<br/>
+
+| Pregunta de encuesta |        Variable        | Respuesta|
+| -------------------- |------------------------| ---------|
+| ¿En qué empresa según sus actividades te gustaría <br/> aspirar a realizar o está realizando su práctica<br/> profesional?| empresa_segun_actividad  | Varias opciones de respuesta |
+| ¿En qué área le gustaría desempeñar <br/> la práctica profesional?                                                        | area_preferida           | Varias opciones de respuesta |
+
+
+#### **empresa_segun_actividad**
+
+ en esta variable se puede observar el área de interés para laborar de los estudiantes de la carrera de ingeniería en sistemas UNAH, aqui  analizamos los rubros del sector afines a la ingenieria en sistemas donde más llama la atención a los estudiantes para laborar, se consideran los principales rubros del campo laborar a nivel nacional, ya que existen muchos mas rubros donde aplica esta profesion.
+ 
+```{r}
+survey$empresa_segun_actividad  <- as.factor(survey$empresa_segun_actividad )
+d<-as.data.frame(floor(prop.table(table(survey$empresa_segun_actividad ))*100)) %>% arrange(-Freq)
+colnames(d)<-c("área de interés laboral","Porcentaje % de estudiantes")
+d
+```
+
+  La tabla anterior muestra el porcentaje de alumnos que se ubica en cada uno de los rubros según el interés de los estudiantes encuestados que es una población de `r nrow(survey)` estudiantes, estos datos han sido procesados en la herramienta RStudio utilizando el lenguaje R.
+
+
+```{r}
+df_perc_empresa_segun_actividad  <- as.data.frame(prop.table(table(survey$empresa_segun_actividad )))
+df_perc_empresa_segun_actividad  <- df_perc_empresa_segun_actividad  %>% arrange(-Freq)
+boxplot(df_perc_empresa_segun_actividad $Freq)
+```
+
+
+En este boxplot de la distribución de empresas según su actividad, podemos ver los porcentajes de estudiantes según sus preferencia por los rubros de trabajo, aqui se puede observar que la mediana son aquellos estudiantes que prefieren los servicios de proveedores de mantenimiento con el 22%, en el cuarto cuartil se ubican el 40% de los estudiantes que están interesados en el área Bancaria, con esta representacion podemos observar claramente como el área de bancos es una área de alto interés en los estudiantes.
+
+
+
+```{r}
+hist(df_perc_empresa_segun_actividad $Freq)
+```
+
+Aqui podemos ver el Histograma donde la superficie de cada barra es proporcional a la frecuencia de los valores representados en la variable "empresa_segun_actividad". Podemos observar la distribución de los datos, permitiendos ver la preferencia, o tendencia, por parte de los estudiantes, que se ubican en cada determinada región.
+
+
+```{r}
+qqnorm(df_perc_empresa_segun_actividad $Freq)
+```
+
+En la grafica de quantiles podemos observar como la distribucion de los datos para la variable "empresa_segun_actividad" es normal con una pequeña variacion de la distribucion de la poblacion al inicio.
+
+```{r}
+plot2 <- ggplot(df_perc_empresa_segun_actividad, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")+  theme(axis.text.x = element_text(angle = 45))
+print(plot2)
+
+```
+
+
+
+Podemos ver en esta representación gráfica un resumen de todo lo antes mencionado y observar mas claramente cómo se distribuyó los porcentajes de estudiantes según como eligieron el área de trabajo dependiendo la actividad que la empresa realiza, se puede ver claramente como las áreas más deseadas o que despiertan mayor interes por los estudiantes para trabajar, serían los bancos y las empresas dedicadas al desarrollo de software.
+
+<br/>
+
+#### **area_preferida**
+
+en esta variable se puede observar las ramas de interés de los estudiantes de la carrera de ingeniería en sistemas UNAH, aqui analizamos donde los estudiantes de ingenieria en sistemas se sienten mas comodos, o la rama de la carrera que mas llama la atención de los mismos. Se consideran las principales ramas de estudio de la facultad de ingenieria en sistemas UNAH, ya que existen otras ramas de estudio para esta profesion.
+
+```{r}
+survey$area_preferida  <- as.factor(survey$area_preferida )
+dq<-as.data.frame(floor(prop.table(table(survey$area_preferida ))*100)) %>% arrange(-Freq)
+colnames(dq)<-c("área de interés de la carrera ","Porcentaje % de estudiantes")
+dq
+```
+ La tabla anterior muestra el porcentaje de alumnos ubicados o dividios en cada una de las ramas según el interés de los estudiantes encuestados que es una población de `r nrow(survey)` estudiantes, estos datos han sido procesados en la herramienta RStudio utilizando el lenguaje R.
+
+
+```{r}
+df_perc_area_preferida  <- as.data.frame(prop.table(table(survey$area_preferida )))
+df_perc_area_preferida  <- df_perc_area_preferida  %>% arrange(-Freq)
+boxplot(df_perc_area_preferida $Freq)
+```
+
+En este boxplot podemos ver los porcentajes de estudiantes según sus preferencia en las distintas areas de la carrear de ing en sistesmas,se puede observar que la mediana son el 15% de estudiantes, que el minimo es el 2.27%, en el tercer cuartil se ubican el 27% de los estudiantes que son losinteresados en el área de bases de datos, y como maximo tenemos a el 36% de los estudiantes, que por la tabla anterior podemos ver que son los interesados en el area de desarrollo de software, con esta representacion podemos observar claramente como el área de desarrollo de software es una área que despierta mucho interes en los estudiantes encuestados.
+
+
+```{r}
+hist(df_perc_area_preferida $Freq)
+```
+
+Aqui vemos el Histograma donde la superficie de cada barra es proporcional a la frecuencia de los valores representados en la variable "area_preferida". Podemos observar la distribución claramente, permitiendos ver la preferencia, o tendencia, por parte de los estudiantes y como se van ubicando en cada determinada región.
+
+```{r}
+qqnorm(df_perc_area_preferida $Freq)
+```
+
+En la grafica de quantiles podemos observar como la distribucion de los datos para la variable "area_preferida" es normal con una pequeña variacion de la distribucion de la poblacion al inicio.
+
+```{r}
+plot2 <- ggplot(df_perc_area_preferida, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")+  theme(axis.text.x = element_text(angle = 45))
+print(plot2)
+
+```
+
+
+Podemos ver en esta representación gráfica un resumen de todo lo antes mencionado y observar mas claramente cómo se distribuyó los porcentajes de estudiantes por sus intereses o su inclinacion hacialas distintas areas de la carrear, se puede ver claramente como las áreas por la que mas se inclinan o mas despierta intereses en los estudiantes, es desarrollo de software, estando cerca tambien bases de datos y seguridad informatica.
+
+
+## Correalaciones
+
+
+> ##### *Para las correlaciones existen 3 tipos, categorica-categorica, categorica-numerica, numerica-numerica, en el caso puntual de nuestra investigacion no se cuenta con variables numericas por lo que nos centraremos unicamente en correlaciones del tipo  categorica-categorica.*
+
+
+
+* **Correlacionamos las variables "area_preferida" y "empresa_segun_actividad"**
+
+```{r echo=FALSE}
+prop.table(table(survey$area_preferida,survey$empresa_segun_actividad),1)
+```
+
+La primera correlacion que hacemos, es ver si estan relacionadas las areas de interes de trabajo de los estudiantes, con su rama de interes dentro de la carreara de ingenieria en sistemas.
+
+
+```{r echo=FALSE}
+ggplot(survey) +
+  aes(x = area_preferida, fill = factor(empresa_segun_actividad)) +
+  geom_bar(position = "fill") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+
+En este pequeño analisis mediante el grafico, podemos ver como los datos obtenidos son fiables y hacen sentido teniendo una relacion logica acertada, donde podemos ver claramente que los rubros empresariales de mayor interes para los estudiantes en este caso Bancos y desarrollo de software van acorde a sus intereses personales de acuerdo a las areas de estudio que mayor porcentaje tienen como ser Desarrollo de software, Base de datos y seguridad informatica.
+
+```{r echo=FALSE}
+chisq.test(table(survey$area_preferida,survey$empresa_segun_actividad))
+```
+
+* **H_0 (Hipótesis nula):** Las categorias de area_preferida y empresa_segun_actividad son independientes.
+<br/>
+* **H_A (Hipótesis alternativa):** Las categorias son dependientes.
+
+> ##### *Aceptamos nuestras hipotesis nula cuando el p-value de nuestra prueba chis.test es menos a 0.05 como nuestro p-value es mayor a 0.05, rechazamos nuestra hipotesis nula, y podemos concluir que las variables "area_preferida" y "empresa_segun_actividad" son dependientes.*
+
+* **Correlacionamos las variables "area_preferida" y "genero"**
+
+```{r echo=FALSE}
+prop.table(table(survey$area_preferida,survey$genero),1)
+```
+
+La segunda correlacion que hacemos, es ver si estan relacionadas las rama de estudio o interes dentro de la carreara de ingenieria en sistemas con el genero de los estudiantes.
+
+```{r echo=FALSE}
+ggplot(survey) +
+  aes(x = area_preferida, fill = factor(genero)) +
+  geom_bar(position = "fill") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+En este pequeño analisis mediante el gafafico, podemos observa a simple vista como el genero parece si tener alguna realacion acorde a las areas de estudio dentro de la facultad, como podemos ver las mujeres se encuentran distribuidas en areas especificas y en mucho menor porcentaje que los hombres que muestran interes en casi todas las ramas, siendo infraestructura el area de menor interes para estos y siendo esta la de mayor interes para las mujeres, que tambien demuestran un interes mas bajo en bases de datos y desarrollo de sofware.
+
+
+```{r echo=FALSE}
+chisq.test(table(survey$area_preferida,survey$genero))
+```
+
+* **H_0 (Hipótesis nula):** Las categorias de area_preferida y genero son independientes.
+<br/>
+* **H_A (Hipótesis alternativa):** Las categorias son dependientes.
+
+> ##### *Aceptamos nuestras hipotesis nula cuando el p-value de nuestra prueba chis.test es menos a 0.05 como nuestro p-value es mayor a 0.05, rechazamos nuestra hipotesis nula, y podemos concluir que las variables "area_preferida" y "genero" son dependientes.*
+
+
+
+* **Correlacionamos las variables "empresa_segun_actividad" y "genero"**
+
+```{r echo=FALSE}
+prop.table(table(survey$empresa_segun_actividad,survey$genero),1)
+```
+
+```{r echo=FALSE}
+ggplot(survey) +
+  aes(x = empresa_segun_actividad, fill = factor(genero)) +
+  geom_bar(position = "fill") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+En este pequeño analisis mediante el grafico, podemos observa a simple vista como el genero parece si tener alguna realacion acorde a las areas de interes de los estudiantes acerca de donde les gustaria laborar o realizar practica profesional, como podemos ver las mujeres se encuentran distribuidas en areas especificas y en mucho menor porcentaje que los hombres que muestran interes en casi todas las areas empresariales, siendo la investigacion el area de menor interes para estos y siendo esta la de mayor interes para las mujeres, que tambien demuestran un interes mas bajo en trabajar en un banco, y un interes un poco mas alto al trabar en empresas provedoras de servicios de mantenimiento y empresas de desarrollo de software.
+
+
+```{r echo=FALSE}
+chisq.test(table(survey$empresa_segun_actividad,survey$genero))
+```
+
+
+* **H_0 (Hipótesis nula):** Las categorias de empresa_segun_actividad y genero son independientes.
+<br/>
+* **H_A (Hipótesis alternativa):** Las categorias son dependientes.
+
+> ##### *Aceptamos nuestras hipotesis nula cuando el p-value de nuestra prueba chis.test es menos a 0.05 como nuestro p-value es mayor a 0.05, rechazamos nuestra hipotesis nula, y podemos concluir que las variables "empresa_segun_actividad" y "genero" son dependientes.*
+
+
+## Explicativa 
+
+En esta seccion buscamos mostrar las razones o causas que den respuesta a nuestra pregunta de investigacion. y asi tratar de explicar mediante la comprobación de nuestra hipótesis por qué ocurre este fenómeno.
+
+<br/>
+
+* ### Regresiones 
+
+Recopilamos todas las variables que son importantes para verificar cual es la más influyente con respecto a la de respuesta para ello necesitamos la recopilación a través de RStudio demostrando lo siguiente:
+
+
+```{r echo=FALSE}
+prop.table(table(survey$rechazo_en_entrevista))
+```
+
+```{r echo=FALSE}
+features <- c(
+  "edad", 
+  "rango_indice", 
+  "nuevas_habilidades_autodidacta",
+  "rendimiento_academico", #survey$area_preferida
+  #"area_preferida",
+  "estudiante_foraneo",
+  "trabaja",
+  "rechazo_en_entrevista"
+)
+set <- survey[, names(survey) %in% features ]
+set$rechazo_en_entrevista  <- as.factor(set$rechazo_en_entrevista)
+model <- glm(rechazo_en_entrevista ~ ., data = set, family = "binomial")
+importances <- varImp(model)
+importances$colum <- row.names(importances)
+importances <- importances %>% arrange(-Overall)
+importances
+```
+
+Ya recopilados las variables más influyentes con la regresion aplicada, ordenadas de la más importante a la que menos porcentaje posee, de acuerdo a la variable de respuesta  “Rango_indice” es la más influyente teniendo la mayor importancias, para verlo de una manera más clara recopilaremos cada variable con sus respectivos gráficos.
+
+
+```{r echo=FALSE}
+ggplot(set) +
+  aes(x= rango_indice, fill=factor(rechazo_en_entrevista))+
+  geom_bar(position='fill')+
+  theme(axis.text.x = element_text(angle = 45))+
+  scale_fill_manual(values=c("#999999","#E69F00"))
+```
+
+Como se muestra en el grafico anterior el rechazo de las entrevistas se da menos para aquello estudiantes que tienen el índice mayor o igual a 81 los que se encuentran en excelencia académica algo notable se puede ver que las o los estudiantes que tienen mayor rechazo son los que tienen un índice menor a 71. Notamos que la barra del índice 76-80 se nota que hay más rechazo pero no es así, en esa barra la cantidad de personas que tienen ese índice es mayor a la cantidad de personas que están en los índices anteriores, comparando con las barras anteriores notamos que los porcentajes de rechazo son menores. 
+
+
+
+```{r echo=FALSE}
+ggplot(set) +
+  aes(x= estudiante_foraneo, fill=factor(rechazo_en_entrevista))+
+  geom_bar(position='fill')+
+  theme(axis.text.x = element_text(angle = 45))+
+  scale_fill_manual(values=c("#999999","#E69F00"))
+```
+
+Logramos apreciar en el grafico anterior que los estudiantes que son foráneos tienen mayor aceptación en las entrevistas consiguiendo la aprobación de las empresas para realizar la practica profesional, a comparación a los estudiantes que viven en la capital ellos demuestran que tienden a ser mas rechazados por las empresas, sin embargo, dada la cantidad de estudiantes varia el indice de rechazo y como se muestra la poblacion con mayor numero de consultados son estudiantes de la capital.
+
+
+
+```{r echo=FALSE}
+ggplot(set) +
+  aes(x= trabaja, fill=factor(rechazo_en_entrevista))+
+  geom_bar(position='fill')+
+  theme(axis.text.x = element_text(angle = 45))+
+  scale_fill_manual(values=c("#999999","#E69F00"))
+```
+
+
+Claramente como vemos en el grafico anterior notamos que las personas que trabajan tienen más aceptación y menos rechazo por parte de las empresas dado que los estudiantes tienen un poco de experiencia en el ámbito laboral, aunque en la barra de las personas que no trabajan también notamos que aunque hay más rechazo también hay aceptación, demostrando que las empresas aceptan a los estudiantes para darles una oportunidad en el campo laboral aunque no tengan experiencia en este.
+
+
+
+```{r echo=FALSE}
+ggplot(set) +
+  aes(x= edad, fill=factor(rechazo_en_entrevista))+
+  geom_bar(position='stack')+
+  theme(axis.text.x = element_text(angle = 45))+
+  scale_fill_manual(values=c("#999999","#E69F00"))
+```
+
+En el grafico anterior vemos que los estudiantes que tienen años de 20-25 tienen menos rechazo en las entrevistas por parte de las empresas, notamos las mismas circunstancias en la barra de las edades de 26-30, podemos decir que las empresas tienen una mayor aceptación a los estudiantes que están a una edad de 20 a 25 años además de que la mayoría de los encuestados son muy jóvenes dándoles más posibilidades de ser aceptados, y a los estúdiates con mayoría de edad tienen aceptación pero no podemos decir que la tiene o no, por la poca cantidad de datos en la ultima proyeccion. 
+
+
+
+```{r echo=FALSE}
+ggplot(set) +
+  aes(x= rendimiento_academico, fill=factor(rechazo_en_entrevista))+
+  geom_bar(position='stack')+
+  theme(axis.text.x = element_text(angle = 45))+
+  scale_fill_manual(values=c("#999999","#E69F00"))
+```
+
+En el grafico anterior vemos con claridad que el estudiantado que tiene alto rendimiento académico obviamente consigue menos rechazo por parte de las empresas, notamos que el rendimiento medio del estudiantado es mas sujeto al a ser rechazado, sin embargo, tambien tienen un gran numero de aceptacion. 
+
+
+* ### Solucion tecnologica
+
+Con toda la informacion mostrada anteriormente, vemos como el problema de nuestro estudio necesita una solucion, para este caso en particular se propone una solucion basada en tecnologia
+a continuacion mostramos en que consite nuestra solucion:
+
+
+
+
+
+
+
+
+
+
+
+
+
