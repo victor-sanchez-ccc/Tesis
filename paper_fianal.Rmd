@@ -1,6 +1,6 @@
 ---
 title: 'DIFICULTAD DE LOS ALUMNOS DE INGENIERÍA EN SISTEMAS PARA SER ACEPTADOS EN SU PRIMERA OPCIÓN DE PRÁCTICA PROFESIONAL'
-author: ''
+author: 'VICTOR SANCHEZ'
 date: '16 de mayo 2020'
 output:
 html_document: default
@@ -210,12 +210,12 @@ La primera correlacion que hacemos, es ver si estan relacionadas las areas de in
 ```{r echo=FALSE}
 ggplot(survey) +
   aes(x = area_preferida, fill = factor(empresa_segun_actividad)) +
-  geom_bar(position = "fill") +
-  theme(axis.text.x = element_text(angle = 45))
+  geom_bar(position = "fill",color="black")+scale_fill_manual(values=c("#009E73", "#999999", "#F0E442","#56B4E9","#D55E00"))+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 45)) 
 ```
 
 
-En este pequeño analisis mediante el grafico, podemos ver como los datos obtenidos son fiables y hacen sentido teniendo una relacion logica acertada, donde podemos ver claramente que los rubros empresariales de mayor interes para los estudiantes en este caso Bancos y desarrollo de software van acorde a sus intereses personales de acuerdo a las areas de estudio que mayor porcentaje tienen como ser Desarrollo de software, Base de datos y seguridad informatica.
 
 ```{r echo=FALSE}
 chisq.test(table(survey$area_preferida,survey$empresa_segun_actividad))
@@ -226,6 +226,10 @@ chisq.test(table(survey$area_preferida,survey$empresa_segun_actividad))
 * **H_A (Hipótesis alternativa):** Las categorias son dependientes.
 
 > ##### *Aceptamos nuestras hipotesis nula cuando el p-value de nuestra prueba chis.test es menos a 0.05 como nuestro p-value es mayor a 0.05, rechazamos nuestra hipotesis nula, y podemos concluir que las variables "area_preferida" y "empresa_segun_actividad" son dependientes.*
+
+
+En este pequeño analisis mediante el grafico, podemos ver como los datos obtenidos son fiables y hacen sentido teniendo una relacion logica acertada, donde podemos ver claramente que los rubros empresariales de mayor interes para los estudiantes en este caso Bancos y desarrollo de software van acorde a sus intereses personales de acuerdo a las areas de estudio que mayor porcentaje tienen como ser Desarrollo de software, Base de datos y seguridad informatica.
+
 
 * **Correlacionamos las variables "area_preferida" y "genero"**
 
@@ -242,7 +246,6 @@ ggplot(survey) +
   theme(axis.text.x = element_text(angle = 45))
 ```
 
-En este pequeño analisis mediante el gafafico, podemos observa a simple vista como el genero parece si tener alguna realacion acorde a las areas de estudio dentro de la facultad, como podemos ver las mujeres se encuentran distribuidas en areas especificas y en mucho menor porcentaje que los hombres que muestran interes en casi todas las ramas, siendo infraestructura el area de menor interes para estos y siendo esta la de mayor interes para las mujeres, que tambien demuestran un interes mas bajo en bases de datos y desarrollo de sofware.
 
 
 ```{r echo=FALSE}
@@ -256,6 +259,7 @@ chisq.test(table(survey$area_preferida,survey$genero))
 > ##### *Aceptamos nuestras hipotesis nula cuando el p-value de nuestra prueba chis.test es menos a 0.05 como nuestro p-value es mayor a 0.05, rechazamos nuestra hipotesis nula, y podemos concluir que las variables "area_preferida" y "genero" son dependientes.*
 
 
+En este pequeño analisis mediante el gafafico, podemos observa a simple vista como el genero parece si tener alguna realacion acorde a las areas de estudio dentro de la facultad, como podemos ver las mujeres se encuentran distribuidas en areas especificas y en mucho menor porcentaje que los hombres que muestran interes en casi todas las ramas, siendo infraestructura el area de menor interes para estos y siendo esta la de mayor interes para las mujeres, que tambien demuestran un interes mas bajo en bases de datos y desarrollo de sofware.
 
 * **Correlacionamos las variables "empresa_segun_actividad" y "genero"**
 
@@ -270,8 +274,6 @@ ggplot(survey) +
   theme(axis.text.x = element_text(angle = 45))
 ```
 
-En este pequeño analisis mediante el grafico, podemos observa a simple vista como el genero parece si tener alguna realacion acorde a las areas de interes de los estudiantes acerca de donde les gustaria laborar o realizar practica profesional, como podemos ver las mujeres se encuentran distribuidas en areas especificas y en mucho menor porcentaje que los hombres que muestran interes en casi todas las areas empresariales, siendo la investigacion el area de menor interes para estos y siendo esta la de mayor interes para las mujeres, que tambien demuestran un interes mas bajo en trabajar en un banco, y un interes un poco mas alto al trabar en empresas provedoras de servicios de mantenimiento y empresas de desarrollo de software.
-
 
 ```{r echo=FALSE}
 chisq.test(table(survey$empresa_segun_actividad,survey$genero))
@@ -283,6 +285,9 @@ chisq.test(table(survey$empresa_segun_actividad,survey$genero))
 * **H_A (Hipótesis alternativa):** Las categorias son dependientes.
 
 > ##### *Aceptamos nuestras hipotesis nula cuando el p-value de nuestra prueba chis.test es menos a 0.05 como nuestro p-value es mayor a 0.05, rechazamos nuestra hipotesis nula, y podemos concluir que las variables "empresa_segun_actividad" y "genero" son dependientes.*
+
+
+En este pequeño analisis mediante el grafico, podemos observa a simple vista como el genero parece si tener alguna realacion acorde a las areas de interes de los estudiantes acerca de donde les gustaria laborar o realizar practica profesional, como podemos ver las mujeres se encuentran distribuidas en areas especificas y en mucho menor porcentaje que los hombres que muestran interes en casi todas las areas empresariales, siendo la investigacion el area de menor interes para estos y siendo esta la de mayor interes para las mujeres, que tambien demuestran un interes mas bajo en trabajar en un banco, y un interes un poco mas alto al trabar en empresas provedoras de servicios de mantenimiento y empresas de desarrollo de software.
 
 
 ## Explicativa 
@@ -318,6 +323,7 @@ importances <- varImp(model)
 importances$colum <- row.names(importances)
 importances <- importances %>% arrange(-Overall)
 importances
+model
 ```
 
 Ya recopilados las variables más influyentes con la regresion aplicada, ordenadas de la más importante a la que menos porcentaje posee, de acuerdo a la variable de respuesta  “Rango_indice” es la más influyente teniendo la mayor importancias, para verlo de una manera más clara recopilaremos cada variable con sus respectivos gráficos.
